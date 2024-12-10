@@ -1,0 +1,79 @@
+# This playbook is designed to set up a new Debian server with essential security and configuration settings.
+# - Hostname
+# - Updates
+# - Automatic security updates
+# - Configure SSH
+#     - Disable ROOT login
+#     - Disable password login
+# - Enable UFW
+#     - Allow OpenSSH
+#     - Default deny incoming
+#     - Default allow outgoing
+#
+# Requieres a list of [configure_new_debian_server] in a hosts file.
+# 
+# ansible-playbook -i hosts playbooks/configure_new_debian_server.yml --ask-become-pass
+---
+- name: Install a new Debian server
+  hosts: configure_new_debian_server
+  become: true
+  vars_prompt:
+    - name: new_hostname
+      prompt: "Enter new hostname"
+      private: no
+  tasks:
+    - name: Configure the hostname
+      ansible.builtin.hostname:
+        name: "{{ new_hostname }}"
+    - name: Ensure the hostname persists on reboot
+      lineinfile:
+        path: /etc/hostname
+        line: "{{ new_hostname }}"
+    - name: Update system packages
+      ansible.builtin.apt:
+        update_cache: yes
+        upgrade: dist
+    - name: Enable automatic security updates
+      ansible.builtin.apt:
+        name: unattended-upgrades
+        state: present
+    - name: Configure SSH
+      block:
+        - name: Disable password authentication
+          lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '^#?PasswordAuthentication'
+            line: 'PasswordAuthentication no'
+        - name: Disable root login
+          lineinfile:
+            path: /etc/ssh/sshd_config
+            regexp: '^#?PermitRootLogin'
+            line: 'PermitRootLogin no'
+        - name: Restart SSH service
+          ansible.builtin.service:
+            name: ssh
+            state: restarted
+    - name: Configure firewall
+      block:
+        - name: Install UFW
+          ansible.builtin.apt:
+            name: ufw
+            state: present
+        - name: Enable UFW
+          community.general.ufw:
+            state: enabled
+            policy: allow
+        - name: Allow OpenSSH
+          community.general.ufw:
+            rule: allow
+            name: OpenSSH
+        - name: Allow outgoing
+          community.general.ufw:
+            default: allow
+            direction: outgoing
+        - name: Deny incoming
+          community.general.ufw:
+            default: deny
+            direction: incoming
+    - name: Reboot
+      ansible.builtin.reboot:
