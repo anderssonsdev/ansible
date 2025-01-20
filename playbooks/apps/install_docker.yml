@@ -3,6 +3,8 @@
 #
 # Requieres a list of [install_docker] in a hosts file.
 #
+# Disables docker to use iptables.
+#
 # ansible-playbook -i hosts playbooks/apps/install_docker.yml --ask-become-pass
 ---
 - name: Install Docker
@@ -57,6 +59,16 @@
           - docker-buildx-plugin
           - docker-compose-plugin
         state: present
+
+    - name: Create Docker daemon.json if it doesn't exist
+      ansible.builtin.copy:
+        dest: /etc/docker/daemon.json
+        content: |
+          {
+            "iptables": false
+          }
+        mode: '0644'
+      when: not ansible.builtin.stat('/etc/docker/daemon.json').exists
 
     - name: Verify Docker installation
       ansible.builtin.command:
