@@ -1,0 +1,42 @@
+# This playbook automates the installation of Podman on a Debian or Ubuntu server,
+# making it easy to set up and manage container environments across multiple servers.
+#
+# Requires a list of [install_podman] hosts in your inventory file.
+#
+# Adds docker.io as the default unqualified search registry in registries.conf.
+#
+# Usage:
+# ansible-playbook -i hosts playbooks/apps/install_podman.yml --ask-become-pass
+---
+- name: Install Podman
+  hosts: install_podman
+  become: true
+  tasks:
+    - name: Update packages
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Upgrade packages
+      ansible.builtin.apt:
+        upgrade: dist
+
+    - name: Install Podman
+      ansible.builtin.apt:
+        name:
+          - podman
+          - podman-compose
+        state: present
+
+    - name: Ensure unqualified-search-registries with docker.io line exists in registries.conf
+      ansible.builtin.lineinfile:
+        path: /etc/containers/registries.conf
+        line: 'unqualified-search-registries = ["docker.io"]'
+        state: present
+        insertafter: EOF
+
+    - name: Restart Podman service
+      ansible.builtin.systemd:
+        name: podman
+        state: restarted
+        enabled: true
+      ignore_errors: true

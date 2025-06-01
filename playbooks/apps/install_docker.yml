@@ -40,13 +40,13 @@
       ansible.builtin.file:
         path: /etc/apt/keyrings
         state: directory
-        mode: '0755'
+        mode: "0755"
 
     - name: Install Docker's official GPG key
       ansible.builtin.get_url:
         url: https://download.docker.com/linux/debian/gpg
         dest: /etc/apt/keyrings/docker.asc
-        mode: '0644'
+        mode: "0644"
       when: distribution_choice | lower == 'debian'
 
     - name: Add Docker apt repository
@@ -55,7 +55,7 @@
         line: |
           deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable
         create: true
-        mode: '0644'
+        mode: "0644"
       when: distribution_choice | lower == 'debian'
 
     # Uncomment for Ubuntu
@@ -63,7 +63,7 @@
       ansible.builtin.get_url:
         url: https://download.docker.com/linux/ubuntu/gpg
         dest: /etc/apt/keyrings/docker.asc
-        mode: '0644'
+        mode: "0644"
       when: distribution_choice | lower == 'ubuntu'
 
     - name: Add Docker apt repository
@@ -72,7 +72,7 @@
         line: |
           deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
         create: true
-        mode: '0644'
+        mode: "0644"
       when: distribution_choice | lower == 'ubuntu'
 
     - name: Update apt package index again
@@ -88,33 +88,3 @@
           - docker-buildx-plugin
           - docker-compose-plugin
         state: present
-
-    # - name: Check existence of Docker daemon.json
-    #   ansible.builtin.stat:
-    #     path: /etc/docker/daemon.json
-    #   register: daemon_json_stat
-
-    # - name: Log daemon.json existence
-    #   ansible.builtin.debug:
-    #     var: daemon_json_stat.stat.exists
-
-    # - name: Create Docker daemon.json if it doesn't exist
-    #   ansible.builtin.copy:
-    #     dest: /etc/docker/daemon.json
-    #     content: |
-    #       {
-    #         "iptables": false
-    #       }
-    #     mode: '0644'
-    #   when: not daemon_json_stat.stat.exists
-
-    # - name: Verify Docker installation
-    #   ansible.builtin.command:
-    #     cmd: docker run hello-world
-    #   register: docker_run_output
-    #   changed_when: docker_run_output.rc != 0
-    #   ignore_errors: true
-
-    # - name: Print Docker run output
-    #   ansible.builtin.debug:
-    #     var: docker_run_output.stdout

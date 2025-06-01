@@ -2,13 +2,13 @@
 
 ## Apps playbooks
 
-[Install Docker](playbooks/apps/install_docker.yml)
+* [Install Docker](playbooks/apps/install_docker.yml)
+* [Install Podman](playbooks/apps/install_podman.yml)
 
 ## Server playbooks
 
-[Configure new Debian server](playbooks/configure_new_debian_server.yml)
-
-[Update Debian server](playbooks/update_server.yml)
+* [Configure new Debian server](playbooks/configure_new_debian_server.yml)
+* [Update Debian server](playbooks/update_server.yml)
 
 ## Help
 
@@ -58,11 +58,11 @@ jondoe@192.168.1.10
 <details>
 <summary>Debian</summary>
 
-Update your system’s package database and install the necessary dependencies:
+### Update your system’s package database and install the necessary dependencies:
 ```sh
 sudo apt update && sudo apt install -y python3-pip git
 ```
-Install Ansible with pip:
+### Install Ansible with pip:
 ```sh
 python3 -m pip install --user ansible
 ```
@@ -75,11 +75,11 @@ ansible --version
 <details>
 <summary>MacOS</summary>
 
-Install Homebrew:
+### Install Homebrew:
 ```sh
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
-Install Ansible with brew:
+### Install Ansible with brew:
 ```sh
 brew install ansible
 ```
