@@ -1,0 +1,71 @@
+# This playbook installs one or more GitHub Actions self-hosted runners on a target host.
+#
+# Version: actions-runner-linux-arm64-2.324.0.tar.gz
+#
+# Requires a list of [install_github_runner] hosts in your inventory file.
+#
+# Prompts for:
+#   - GitHub repository (e.g., owner/repo)
+#   - Registration token
+#   - Runner labels (comma-separated)
+#   - Username to own the runner processes and files
+#   - Number of runners to configure
+#
+# Each runner will be installed in /home/<username>/github_runners/<runner_name>.
+# The runner tarball is downloaded to /home/<username>/github_runners/downloads/.
+#
+# Usage:
+# ansible-playbook -i hosts playbooks/apps/install_github_runner.yml --ask-become-pass
+---
+- name: Install GitHub Actions Runner
+  hosts: install_github_runner
+  become: true
+  vars_prompt:
+    - name: github_repo
+      prompt: "Enter the GitHub repository (e.g., owner/repo)"
+      private: no
+    - name: github_token
+      prompt: "Enter the GitHub Actions runner registration token"
+      private: yes
+    - name: runner_labels
+      prompt: "Enter labels for the runner (comma-separated, e.g., label1,label2)"
+      private: no
+    - name: username
+      prompt: "Enter the username for the runner"
+      private: no
+    - name: runner_count
+      prompt: "Enter the number of runners to configure"
+      private: no
+      default: 1
+
+  vars:
+    runner_download_path: "/home/{{ username }}/github_runners/downloads/"
+
+  tasks:
+    - name: Ensure shared runner base folder exists
+      ansible.builtin.file:
+        path: "{{ runner_download_path }}"
+        state: directory
+        owner: "{{ username }}"
+        group: "{{ username }}"
+        mode: "0755"
+
+    - name: Download latest GitHub Actions runner linux-arm64-2.324.0
+      ansible.builtin.get_url:
+        url: "https://github.com/actions/runner/releases/download/v2.324.0/actions-runner-linux-arm64-2.324.0.tar.gz"
+        dest: "{{ runner_download_path }}/actions-runner.tar.gz"
+        mode: "0644"
+
+    - name: Install multiple runners
+      include_tasks: ./github/install_single_runner.yml
+      loop: "{{ range(1, (runner_count | int) + 1) | list }}"
+      loop_control:
+        loop_var: item
+      vars:
+        runner_name: "runner-{{ item }}"
+        installation_folder: "/home/{{ username }}/github_runners/{{ runner_name }}"
+
+    - name: Remove existing runner folder if it exists
+      ansible.builtin.file:
+        path: "{{ runner_download_path }}"
+        state: absent

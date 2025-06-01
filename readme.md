@@ -3,6 +3,7 @@
 ## Apps playbooks
 
 * [Install Docker](playbooks/apps/install_docker.yml)
+* [Install Github runner](playbooks/apps/install_github_runner.yml)
 * [Install Podman](playbooks/apps/install_podman.yml)
 
 ## Server playbooks

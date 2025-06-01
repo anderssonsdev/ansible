@@ -1,0 +1,56 @@
+# This playbook installs a single GitHub Actions runner on a Linux ARM64 machine.
+# It handles the installation, configuration, and service management of the runner.
+---
+- name: Uninstall the runner as a service (if it exists)
+  ansible.builtin.shell: ./svc.sh uninstall || true
+  args:
+    chdir: "{{ installation_folder }}"
+  become: true
+
+- name: Remove any existing runner configuration
+  ansible.builtin.shell: ./config.sh remove --token {{ github_token }}
+  args:
+    chdir: "{{ installation_folder }}"
+  become: false
+  become_user: "{{ username }}"
+
+- name: Ensure runner {{ installation_folder }} exists
+  ansible.builtin.file:
+    path: "{{ installation_folder }}"
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    recurse: yes
+
+- name: Extract runner
+  ansible.builtin.unarchive:
+    src: "{{ runner_download_path }}/actions-runner.tar.gz"
+    dest: "{{ installation_folder }}"
+    remote_src: yes
+
+- name: Set ownership of runner folder recursively to runner user
+  ansible.builtin.file:
+    path: "{{ installation_folder }}"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    recurse: yes
+
+- name: Configure the runner
+  ansible.builtin.shell: |
+    ./config.sh --unattended --url https://github.com/{{ github_repo }} --token {{ github_token }} --name {{ runner_name }} --labels {{ runner_labels }} --work "./_work"
+  args:
+    chdir: "{{ installation_folder }}"
+  become: false
+  become_user: "{{ username }}"
+
+- name: Install the runner as a service
+  ansible.builtin.shell: ./svc.sh install
+  args:
+    chdir: "{{ installation_folder }}"
+  become: true
+
+- name: Start the runner service
+  ansible.builtin.shell: ./svc.sh start
+  args:
+    chdir: "{{ installation_folder }}"
+  become: true
