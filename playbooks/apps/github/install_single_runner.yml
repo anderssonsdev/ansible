@@ -1,18 +1,25 @@
 # This playbook installs a single GitHub Actions runner on a Linux ARM64 machine.
 # It handles the installation, configuration, and service management of the runner.
 ---
+- name: Check if runner folder exists
+  ansible.builtin.stat:
+    path: "{{ installation_folder }}"
+  register: runner_folder_stat
+
 - name: Uninstall the runner as a service (if it exists)
   ansible.builtin.shell: ./svc.sh uninstall || true
   args:
     chdir: "{{ installation_folder }}"
   become: true
+  when: runner_folder_stat.stat.exists
 
 - name: Remove any existing runner configuration
   ansible.builtin.shell: ./config.sh remove --token {{ github_token }}
   args:
     chdir: "{{ installation_folder }}"
-  become: false
+  become: true
   become_user: "{{ username }}"
+  when: runner_folder_stat.stat.exists
 
 - name: Ensure runner {{ installation_folder }} exists
   ansible.builtin.file:
