@@ -15,7 +15,7 @@
 # The runner tarball is downloaded to /home/<username>/github_runners/downloads/.
 #
 # Usage:
-# ansible-playbook -i hosts playbooks/apps/install_github_runner.yml --ask-become-pass
+# ansible-playbook -i hosts playbooks/apps/github/install_github_runner.yml --ask-become-pass
 ---
 - name: Install GitHub Actions Runner
   hosts: install_github_runner
