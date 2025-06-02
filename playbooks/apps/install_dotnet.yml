@@ -1,0 +1,55 @@
+# This playbook installs dotnet on Debian servers.
+#
+# Requires a list of [install_dotnet] hosts in your inventory file.
+#
+# Usage:
+# ansible-playbook -i hosts playbooks/apps/install_dotnet.yml --ask-become-pass
+---
+- name: Install .NET SDK using official install script
+  hosts: install_dotnet
+  become: true
+
+  vars_prompt:
+    - name: dotnet_version
+      prompt: "Enter the .NET version to install (e.g., 8.0 or 9.0.100-preview.12)"
+      private: false
+      default: "9.0.300"
+
+  tasks:
+    - name: Download dotnet-install script
+      get_url:
+        url: https://builds.dotnet.microsoft.com/dotnet/scripts/v1/dotnet-install.sh
+        dest: /tmp/dotnet-install.sh
+        mode: "0755"
+
+    - name: Install .NET SDK version {{ dotnet_version }}
+      shell: |
+        /tmp/dotnet-install.sh --version {{ dotnet_version }} --install-dir /opt/dotnet --verbose
+      args:
+        creates: /opt/dotnet/dotnet
+
+    - name: Symlink dotnet binary to /usr/local/bin
+      file:
+        src: /opt/dotnet/dotnet
+        dest: /usr/local/bin/dotnet
+        state: link
+        force: yes
+
+    - name: Add dotnet to system PATH
+      copy:
+        dest: /etc/profile.d/dotnet.sh
+        content: |
+          export DOTNET_ROOT=/opt/dotnet
+          export PATH=$PATH:/opt/dotnet:/opt/dotnet/tools
+        mode: "0644"
+        owner: root
+        group: root
+
+    - name: Verify .NET installation
+      command: dotnet --version
+      register: dotnet_version_output
+      changed_when: false
+
+    - name: Display installed .NET version
+      debug:
+        msg: "Installed .NET version is {{ dotnet_version_output.stdout }}"
