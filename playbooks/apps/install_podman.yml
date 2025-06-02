@@ -40,3 +40,11 @@
         state: restarted
         enabled: true
       ignore_errors: true
+
+    - name: Get Podman version
+      ansible.builtin.command: podman --version
+      register: podman_version
+
+    - name: Display Podman version
+      ansible.builtin.debug:
+        msg: "{{ podman_version.stdout }}"
